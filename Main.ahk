@@ -60,21 +60,6 @@ HideTrayTip() {
 }
 Return
 
-; Suspends GTA5.exe for 8.5 seconds to create a solo session.
-NewSolo:
-  Process, Exist, GTA5.exe
-  pid := ErrorLevel
-  If (!IsProcessSuspended(pid)) {
-    SuspendProcess(pid)
-  }
-  Sleep, 8500
-  Process, Exist, GTA5.exe
-  pid := ErrorLevel
-  If (IsProcessSuspended(pid)) {
-    ResumeProcess(pid)
-  }
-Return
-
 ; Suspends a process which has the given pid value.
 SuspendProcess(pid) {
   hProcess := DllCall("OpenProcess", "UInt", 0x1F0FFF, "Int", 0, "Int", pid)
@@ -101,5 +86,75 @@ IsProcessSuspended(pid) {
     If (thread.ThreadWaitReason != 5)
       Return False
     Return True
+}
+Return
+
+; Suspends GTA5.exe for 8.5 seconds to create a solo session.
+NewSolo:
+  Process, Exist, GTA5.exe
+  pid := ErrorLevel
+  If (!IsProcessSuspended(pid)) {
+    SuspendProcess(pid)
+  }
+  Sleep, 8500
+  Process, Exist, GTA5.exe
+  pid := ErrorLevel
+  If (IsProcessSuspended(pid)) {
+    ResumeProcess(pid)
+  }
+Return
+
+; Small toast to let the user know they should find a new session.
+GTATimerToast:
+TrayTip, GTA:O Script, Find a new session!,, 2
+Return
+
+; Changes the tooltip of the icon into the remaining time of the alert.
+; Gets called every second by SessionTimer & if boolTimerTooltip = true.
+GTATimerTooltipUpdate:
+; Every time it is called, substract 1 second of the remaining time.
+intTimerSecLeft -= 1
+; If the remaining seconds are less than zero,
+; check if remaining minutes are still positive.
+If (intTimerSecLeft < 0) {
+	; If remaining minutes are negative, that mean the remaining time is up.
+	; So the tooltip changes content to "Find a new session!"
+	; The repeating timer gets deleted and this function stops.
+	If (intTimerMinLeft <= 0) {
+		Menu, Tray, Tip , Find a new session!
+		SetTimer, GTATimerTooltipUpdate, Delete
+		return
+	}
+	; If the remaing minutes are positive, subtract 1 minute of the remaining ones,
+	; and reset the remaing seconds to 59.
+	intTimerMinLeft--
+	intTimerSecLeft = 59
+}
+; Updates the tooltip to show the remaining minutes and seconds.
+Menu, Tray, Tip , %intTimerMinLeft% min and %intTimerSecLeft% sec left before taxes.
+Return
+
+; Creates a timer toast to warn you when the chosen minutes treshold has past.
+SessionTimer:
+SetTimer, GTATimerToast, -%intTimerMs%
+; If the treshold is only 1 minute, changes the spelling to singular.
+If (intTimerMin = 1) {
+	TrayTip, GTA:O Script, Timer started`nTimer is set for %intTimerMin% minute,, 17
+} Else {
+	TrayTip, GTA:O Script, Timer started`nTimer is set for %intTimerMin% minutes,, 17
+}
+SetTimer, HideTrayTip, -5000
+; Renames "Set Session Timer" to "Reset Session Timer",
+; unless it is already renamed.
+If !boolMenuSessionTimerSet
+{
+	Menu, Tray, Rename, Set Session Timer, Reset Session Timer
+	boolMenuSessionTimerSet := true
+}
+; Check if the user wants a tooltip to show the remaining time.
+If boolTimerTooltip {
+	intTimerMinLeft := intTimerMin
+	intTimerSecLeft := 0
+	SetTimer, GTATimerTooltipUpdate, 1000
 }
 Return
