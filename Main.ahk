@@ -7,14 +7,32 @@ SendMode Input  ; Recommended for new scripts due to its superior speed and reli
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 SetTitleMatchMode, 2  ; Necessary to match on the name of the window instead of window class in IfWinActive.
 
+; Configurable settings.
+; -----------------------------------------------------------------------------
+
 ; Set keybindings for macros here.
 NewSoloKey := "F9"
+SessionTimerKey := "F10"
+
+; How many minutes before the script warns you to start a new session.
+intTimerMin := 40
+
+; Should a tooltip show how much time is left before finding a new session?
+boolTimerTooltip := true
+
+; End of configurable settings.
+; -----------------------------------------------------------------------------
 
 ; Assigns the macros to the chosen hotkeys.
 Hotkey, %NewSoloKey%, NewSolo
+Hotkey, %SessionTimerKey%, SessionTimer
+
+; Changes the desired timer minutes into milliseconds.
+intTimerMs := intTimerMin * 60000
 
 ; Creates a menu when rightclicking on the icon.
 Menu, Tray, Add, New Solo Session, NewSolo
+Menu, Tray, Add, Set Session Timer, SessionTimer
 Menu, Tray, Add  ; Creates a separator line.
 ; Rearrenges the menu so custom menu items come on top.
 Menu, Tray, NoStandard
@@ -29,7 +47,18 @@ Menu, Tray, Tip , GTA:O Script is running.
 
 Return
 ; Every command before this line is runned when the script is started.
-; ----------------------------------------------------------------------------------------------------------
+; -----------------------------------------------------------------------------
+
+; Win10 workaround to prevent toasts of this script remaining in the action center.
+HideTrayTip() {
+    TrayTip
+    if SubStr(A_OSVersion,1,3) = "10." {
+        Menu Tray, NoIcon
+        Sleep 200
+        Menu Tray, Icon
+    }
+}
+Return
 
 ; Suspends GTA5.exe for 8.5 seconds to create a solo session.
 NewSolo:
@@ -46,6 +75,7 @@ NewSolo:
   }
 Return
 
+; Suspends a process which has the given pid value.
 SuspendProcess(pid) {
   hProcess := DllCall("OpenProcess", "UInt", 0x1F0FFF, "Int", 0, "Int", pid)
   If (hProcess) {
@@ -55,6 +85,7 @@ SuspendProcess(pid) {
 }
 Return
 
+; Resumes a process which has the given pid value.
 ResumeProcess(pid) {
   hProcess := DllCall("OpenProcess", "UInt", 0x1F0FFF, "Int", 0, "Int", pid)
   If (hProcess) {
@@ -64,21 +95,11 @@ ResumeProcess(pid) {
 }
 Return
 
+; Checks wether a process which has the given pid value is suspended (true) or not (false).
 IsProcessSuspended(pid) {
   For thread in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Thread WHERE ProcessHandle = " pid)
     If (thread.ThreadWaitReason != 5)
       Return False
     Return True
-}
-Return
-
-; Win10 workaround to prevent toasts of this script remaining in the action center.
-HideTrayTip() {
-    TrayTip
-    if SubStr(A_OSVersion,1,3) = "10." {
-        Menu Tray, NoIcon
-        Sleep 200
-        Menu Tray, Icon
-    }
 }
 Return
