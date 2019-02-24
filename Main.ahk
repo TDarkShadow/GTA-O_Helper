@@ -13,7 +13,7 @@ SetTitleMatchMode, 2  ; Necessary to match on the name of the window instead of 
 ; Set keybindings for macros here.
 NewSoloKey := "F9"
 SessionTimerKey := "F10"
-KillGTAKey := "!F10"
+KillGTAKey := "End"
 
 ; set to the adapter name
 adapter:="Ethernet"
@@ -30,6 +30,7 @@ boolTimerTooltip := true
 ; Assigns the macros to the chosen hotkeys.
 Hotkey, %NewSoloKey%, NewSolo
 Hotkey, %SessionTimerKey%, SessionTimer
+Hotkey, %KillGTAKey%, KillGTA
 
 ; Changes the desired timer minutes into milliseconds.
 intTimerMs := intTimerMin * 60000
@@ -186,9 +187,9 @@ Return
 
 TestInternetAccess:
 If ConnectedToInternet() {
-   Msgbox, 64, WinInet.dll, ONLINE!
+  Msgbox, 64, WinInet.dll, ONLINE!
 } Else {
-   Msgbox, 48, WinInet.dll, OFFLINE!
+  Msgbox, 48, WinInet.dll, OFFLINE!
 }
 Return
 
