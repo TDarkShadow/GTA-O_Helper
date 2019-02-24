@@ -13,6 +13,10 @@ SetTitleMatchMode, 2  ; Necessary to match on the name of the window instead of 
 ; Set keybindings for macros here.
 NewSoloKey := "F9"
 SessionTimerKey := "F10"
+KillGTAKey := "!F10"
+
+; set to the adapter name
+adapter:="Ethernet"
 
 ; How many minutes before the script warns you to start a new session.
 intTimerMin := 40
@@ -33,6 +37,7 @@ intTimerMs := intTimerMin * 60000
 ; Creates a menu when rightclicking on the icon.
 Menu, Tray, Add, New Solo Session, NewSolo
 Menu, Tray, Add, Set Session Timer, SessionTimer
+Menu, Tray, Add, Kill GTA5, KillGTA
 Menu, Tray, Add  ; Creates a separator line.
 ; Rearrenges the menu so custom menu items come on top.
 Menu, Tray, NoStandard
@@ -104,9 +109,15 @@ NewSolo:
   }
 Return
 
+KillGTA:
+  Process, Exist, GTA5.exe
+  pid := ErrorLevel
+  Process, Close, %pid%
+Return
+
 ; Small toast to let the user know they should find a new session.
 GTATimerToast:
-TrayTip, GTA:O Script, Find a new session!,, 2
+TrayTip, GTA:O Script, Find a new session{!},, 2
 Return
 
 ; Changes the tooltip of the icon into the remaining time of the alert.
@@ -121,7 +132,7 @@ If (intTimerSecLeft < 0) {
 	; So the tooltip changes content to "Find a new session!"
 	; The repeating timer gets deleted and this function stops.
 	If (intTimerMinLeft <= 0) {
-		Menu, Tray, Tip , Find a new session!
+		Menu, Tray, Tip , Find a new session{!}
 		SetTimer, GTATimerTooltipUpdate, Delete
 		return
 	}
@@ -158,3 +169,31 @@ If boolTimerTooltip {
 	SetTimer, GTATimerTooltipUpdate, 1000
 }
 Return
+/*
+ScrollLock::
+run, netsh advfirewall firewall set rule name="A" new enable=yes,, hide
+Sleep 10000
+run, netsh advfirewall firewall set rule name="A" new enable=no,, hide
+Return
+
+ToggleInternetAccess:
+If ConnectedToInternet() {
+    runwait, netsh interface set interface %adapter% disabled,,hide
+} Else {
+    runwait, netsh interface set interface %adapter% enabled,,hide
+}
+Return
+
+TestInternetAccess:
+If ConnectedToInternet() {
+   Msgbox, 64, WinInet.dll, ONLINE!
+} Else {
+   Msgbox, 48, WinInet.dll, OFFLINE!
+}
+Return
+
+ConnectedToInternet(flag=0x40) {
+	Return DllCall("Wininet.dll\InternetGetConnectedState", "Str", flag,"Int",0)
+}
+Return
+*/
